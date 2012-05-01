@@ -353,6 +353,35 @@ static VALUE cModel_predict(VALUE obj,VALUE example) {
   return rb_float_new(class);
 }
 
+static VALUE cModel_predict_probability(VALUE obj,VALUE example) {
+  struct svm_node *x;
+  struct svm_model *model;
+  double class;
+  double *probs_ptr;
+  VALUE probs;
+  int i;
+  
+  x = example_to_internal(example);
+  Data_Get_Struct(obj, struct svm_model, model);
+  probs_ptr = (double *)calloc(model->nr_class, sizeof(double));
+  
+  if(probs_ptr == 0) {
+    rb_raise(rb_eNoMemError, "on predict_probability result allocation" " %s:%i", __FILE__,__LINE__);
+  }
+  
+  class = svm_predict_probability(model, x, probs_ptr);
+
+  probs = rb_ary_new2(model->nr_class);
+  
+  for(i = 0; i < model->nr_class; ++i) {
+    rb_ary_push(probs_ptr, rb_float_new(*(probs_ptr+i)));
+  }
+  
+  free(probs_ptr);
+  
+  return probs_ptr;
+}
+
 static VALUE cModel_save(VALUE obj, VALUE filename)
 {
   const struct svm_model *model;
@@ -466,6 +495,7 @@ void Init_libsvm() {
   rb_define_method(cModel, "svm_type", cModel_svm_type, 0);
   rb_define_method(cModel, "classes", cModel_classes, 0);
   rb_define_method(cModel, "predict", cModel_predict, 1);
+  rb_define_method(cModel, "predict_probability", cModel_predict_probability, 1);
 
   /*
   Not covered, for various reasons:
