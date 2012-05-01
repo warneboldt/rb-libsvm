@@ -379,7 +379,7 @@ static VALUE cModel_predict_probability(VALUE obj,VALUE example) {
   
   free(probs_ptr);
   
-  return probs_ptr;
+  return probs;
 }
 
 static VALUE cModel_save(VALUE obj, VALUE filename)
